@@ -27,6 +27,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+   
     const taskCollection = client.db("taskDB").collection("Task");
     const riviewCollection = client.db("taskDB").collection("riview");
     const contactCollection = client.db("taskDB").collection("contact");
@@ -69,14 +70,26 @@ async function run() {
       res.send(result);
     });
     app.get("/riview", async (req, res) => {
-      const cursor = riviewCollection.find();
-      const result = await cursor.toArray();
+        const cursor = riviewCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+    });
+    app.get("/task/:email", async (req, res) => {
+      const email = req.params.email;
+      console.log(email);
+      const result = await taskCollection.findOne({ email });
+      res.send(result);
+      console.log(result);
+    });
+    app.post("/task", async (req, res) => {
+      const newsit = req.body;
+
+      const result = await taskCollection.insertOne(newsit);
       res.send(result);
     });
-
     await client.db("admin").command({ ping: 1 });
     console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
+        "Pinged your deployment. You successfully connected to MongoDB!"
     );
   } finally {
     
