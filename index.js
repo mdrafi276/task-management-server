@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 app.use(cors());
@@ -10,9 +10,6 @@ app.use(cookieParser());
 const port = process.env.PORT || 5000;
 
 require("dotenv").config();
-// taskmanagement;
-
-// ZRZbLcsjZmLVD;6P7
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.6eaz3fu.mongodb.net/?retryWrites=true&w=majority`;
@@ -74,26 +71,94 @@ async function run() {
         const result = await cursor.toArray();
         res.send(result);
     });
-    app.get("/task/:email", async (req, res) => {
-      const email = req.params.email;
-      console.log(email);
-      const result = await taskCollection.findOne({ email });
-      res.send(result);
-      console.log(result);
+    app.get("/task", async (req, res) => {
+        const cursor = taskCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
     });
+   
     app.post("/task", async (req, res) => {
       const newsit = req.body;
 
       const result = await taskCollection.insertOne(newsit);
       res.send(result);
     });
+
+
+app.get("/task/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
+    const query = {
+      userEmail: email,
+    };
+    const result = await taskCollection.find(query).toArray();
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+  }
+});
+// todo 
+
+app.get("/task/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  console.log("query");
+  const result = await taskCollection.findOne(query);
+  res.send(result);
+  console.log(result)
+});
+
+app.post("/task", async (req, res) => {
+  try {
+    const task = req.body;
+    console.log(task);
+    const result = await taskCollection.insertOne(task);
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+app.put("/tasks/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const task = req.body;
+    const filter = { _id: new ObjectId(id) };
+    const options = { upsert: true };
+    const updatedData = {
+      $set: {
+        title: task.title,
+        date: task.date,
+        description: task.description,
+        priority: task.priority,
+      },
+    };
+    const result = await taskCollection.updateOne(filter, updatedData, options);
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+app.delete("/task/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await taskCollection.deleteOne(query);
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// todo end 
+
     await client.db("admin").command({ ping: 1 });
     console.log(
         "Pinged your deployment. You successfully connected to MongoDB!"
     );
   } finally {
-    
-    
+
   }
 }
 run().catch(console.dir);
